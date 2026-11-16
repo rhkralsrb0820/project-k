@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project K · 운영 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#191c20;--sub:#626b78;--line:#e2e5ea;--accent:#2256c4;--ok:#17734a;--okbg:#e4f4eb;--info:#2256c4;--infobg:#e6eefc;
+--warn:#8f5400;--warnbg:#fdf1d8;--bad:#b3261e;--badbg:#fbe6e4;--ask:#6a3da0;--askbg:#f0e8fa;--mute:#626b78;--mutebg:#eceef2;
+--fs-xs:12px;--fs-sm:13px;--fs:14px;--fs-md:15px;--fs-lg:18px;--fs-xl:26px;--r:10px}
+@media (prefers-color-scheme:dark){:root{--bg:#101317;--card:#191d23;--ink:#e9ebee;--sub:#9ba4b0;--line:#2b3139;--accent:#82b1ff;--ok:#6fd49b;--okbg:#153524;
+--info:#8db8ff;--infobg:#17294a;--warn:#f0c060;--warnbg:#3d2e0d;--bad:#ff8a80;--badbg:#45191a;--ask:#c7a6f5;--askbg:#2e2144;--mute:#9ba4b0;--mutebg:#252a32}}
+:root{color-scheme:light dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--fs)/1.6 "Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:var(--accent);text-underline-offset:2px}
+b,strong{font-weight:600}
+p{margin:0 0 8px}p:last-child{margin-bottom:0}
+ul{margin:6px 0;padding-left:18px}li+li{margin-top:4px}
+small{font-size:var(--fs-xs);font-weight:400;color:var(--sub)}
+code{font:var(--fs-xs)/1.5 Consolas,"D2Coding",monospace}
+.sub{color:var(--sub);font-size:var(--fs-sm)} .num{font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:0}
+.empty{color:var(--sub);padding:12px 0}
+
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:10px 24px;display:flex;gap:16px;align-items:center}
+header h1{font-size:var(--fs-lg);font-weight:700;margin:0;letter-spacing:-.02em;white-space:nowrap}
+#tenant{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header label{white-space:nowrap}
+.tabs{display:flex;gap:2px;background:var(--mutebg);border-radius:8px;padding:3px}
+.tabs button{border:0;background:none;padding:5px 14px;font-weight:600;color:var(--sub);border-radius:6px;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+@media (max-width:900px){header{flex-wrap:wrap;padding:10px 16px;gap:10px}#tenant{display:none}}
+
+main{padding:24px 24px 64px}
+.page{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr);align-items:start}
+.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c12{grid-column:span 12}
+@media (max-width:1100px){.c5,.c6,.c7{grid-column:span 12}main{padding:16px 16px 48px}}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0}
+section h2{font-size:var(--fs-md);font-weight:600;line-height:1.4;margin:0 0 12px;display:flex;gap:10px;align-items:baseline;justify-content:space-between;letter-spacing:-.015em}
+section h2 small{text-align:right}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{display:flex;flex-direction:column;gap:4px;text-align:left;padding:16px 20px;border-radius:var(--r);min-width:0}
+.kpi:hover,.item:hover{border-color:var(--accent)}
+.kpi .l{font-size:var(--fs-sm);color:var(--sub);font-weight:600}
+.kpi .v{font-size:var(--fs-xl);font-weight:700;line-height:1.25;letter-spacing:-.025em;font-variant-numeric:tabular-nums}.kpi .v.bad{color:var(--bad)}
+.kpi .s{font-size:var(--fs-xs);color:var(--sub);line-height:1.5}
+
+table{border-collapse:collapse;width:100%;font-size:var(--fs-sm)}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;line-height:1.5}
+tr:last-child>td{border-bottom:0}
+th{font-weight:600;color:var(--sub);font-size:var(--fs-xs);white-space:nowrap;letter-spacing:0}
+td.r,th.r{text-align:right}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--mutebg)}
+.scroll{overflow:auto;max-height:340px}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:var(--fs-xs);font-weight:500;line-height:1.6;white-space:nowrap;letter-spacing:0;background:var(--mutebg);color:var(--mute)}
+.chip.ok{background:var(--okbg);color:var(--ok)}.chip.info{background:var(--infobg);color:var(--info)}.chip.warn{background:var(--warnbg);color:var(--warn)}
+.chip.bad{background:var(--badbg);color:var(--bad)}.chip.ask{background:var(--askbg);color:var(--ask)}
+
+button,select,input,textarea{font:inherit;letter-spacing:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 12px}
+select,input,textarea{padding:6px 9px}
+button{cursor:pointer;font-weight:500;white-space:nowrap}button:hover{border-color:var(--accent)}
+button.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button small{color:inherit;opacity:.75}
+@media (prefers-color-scheme:dark){button.p{color:#0b1220}}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cell{cursor:pointer;border:0;background:none;padding:0;text-align:right;width:100%;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.cell b{font-size:var(--fs-md);font-weight:600}.cell:hover b{text-decoration:underline}
+
+ul.list{list-style:none;margin:0;padding:0}ul.list li{padding:10px 0;margin:0;border-bottom:1px solid var(--line)}ul.list li:first-child{padding-top:0}ul.list li:last-child{border:0;padding-bottom:0}
+ul.tasks li{display:flex;flex-direction:column;gap:4px;padding-left:12px;border-left:3px solid transparent}
+ul.tasks li.mine{border-left-color:var(--accent)}
+.banner,.note{padding:10px 14px;border-radius:8px;margin:8px 0;font-size:var(--fs-sm);line-height:1.6}
+.banner{border:1px solid var(--bad);background:var(--badbg)}.note{border:1px solid var(--warn);background:var(--warnbg)}.note.okn{border-color:var(--ok);background:var(--okbg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:160px 1fr;gap:8px 14px;align-items:center;font-size:var(--fs-sm)}
+.grid2 input,.grid2 select,.grid2 textarea{width:100%}
+.grid2>b,.grid2>label{color:var(--sub);font-weight:500}
+
+body[data-view=work]{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body[data-view=work] main{flex:1;min-height:0;padding:16px 24px 0;display:flex;flex-direction:column}
+.bbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.board{flex:1;min-height:0;display:flex;gap:14px;overflow-x:auto;padding:0 96px 16px 0;align-items:flex-start}
+.col{flex:0 0 304px;max-height:100%;display:flex;flex-direction:column;background:var(--mutebg);border-radius:12px;padding:10px}
+.col h2{font-size:var(--fs-sm);font-weight:600;line-height:1.4;margin:4px 6px 10px;display:flex;justify-content:space-between;gap:8px}
+.cnt{color:var(--sub);font-weight:500}
+.cards{overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:8px;padding:1px}
+.kc{display:flex;flex-direction:column;gap:8px;background:var(--card);padding:10px 12px;border-radius:9px;border:1px solid transparent;border-left:3px solid transparent;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.kcb{display:flex;flex-direction:column;gap:6px;text-align:left;white-space:normal;font-weight:400;line-height:1.5;padding:0;border:0;background:none;width:100%}
+.kca{align-self:flex-end;font-size:var(--fs-xs);padding:2px 10px}.col.done{background:none;border:1px dashed var(--line)}
+.kc:hover{border-color:var(--accent)}.kc.mine{border-left-color:var(--accent)}
+.it{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.form label{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-size:var(--fs-sm);font-weight:500;color:var(--sub)}
+.form :is(textarea,input){width:100%;color:var(--ink)}.form textarea{resize:vertical}
+@media (max-width:900px){body[data-view=work]{height:auto;display:block;overflow:auto}body[data-view=work] main{display:block;padding:16px}.col{max-height:70vh;flex-basis:280px}.board{padding-right:0}}
+
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(980px,94vw);max-height:90vh;padding:24px 28px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 12px;font-size:20px;font-weight:700;line-height:1.4;letter-spacing:-.02em}
+dialog h4{margin:24px 0 8px;font-size:var(--fs-md);font-weight:600}
+#orb{position:fixed;right:24px;bottom:24px;z-index:6;width:72px;height:72px;padding:0;border-radius:50%;background:var(--card);box-shadow:0 6px 24px rgba(0,0,0,.2);display:grid;place-items:center;transition:transform .15s}
+#orb:hover{transform:scale(1.06)}#orb canvas{width:72px;height:72px;display:block}
+#orbPanel{position:fixed;inset:auto 24px 108px auto;margin:0;width:min(380px,calc(100vw - 32px));border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+#orbPanel h3{margin:0 0 12px;font-size:var(--fs-md);font-weight:600}
+#orbPanel label{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-sm);color:var(--sub);margin-bottom:12px;min-width:0}
+#orbPanel :is(select,textarea,input){width:100%;color:var(--ink)}#orbPanel textarea{resize:vertical}
+#orbPanel .row{margin-bottom:12px}#orbPanel .llm{font-size:var(--fs-xs);color:var(--sub);border-top:1px solid var(--line);padding-top:10px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}#orbPanel .llm b{color:var(--ink);font-weight:500}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;font-size:var(--fs-sm);color:var(--sub);cursor:pointer;margin:0 0 8px;transition:background .12s,border-color .12s}
+.drop:hover,.drop:focus-visible{border-color:var(--accent);color:var(--ink)}.drop.over{border-color:var(--accent);border-style:solid;background:var(--infobg);color:var(--info)}
+.drop small{display:block;margin-top:4px}.drop input{display:none}
+.flist{list-style:none;margin:0 0 12px;padding:0;font-size:var(--fs-sm)}.flist li{display:flex;gap:8px;align-items:center;padding:6px 0;margin:0;border-bottom:1px solid var(--line)}
+.flist .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}.flist button{padding:0 7px;border:0;background:none;color:var(--sub);font-size:16px}
+.orb2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#toast{position:fixed;left:20px;bottom:20px;max-width:520px;padding:12px 16px;border-radius:10px;background:var(--ink);color:var(--bg);display:none;z-index:99}
+#toast.bad{background:var(--bad);color:#fff}
+svg text{fill:var(--sub);font-size:10px;letter-spacing:0}
+.gap{margin:16px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+.gh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:var(--fs-sm)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 0 var(--bad);animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{to{box-shadow:0 0 0 8px transparent}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.gt{position:relative;height:6px;border-radius:3px;background:var(--mutebg);margin:34px 6px 30px}
+.gt i{position:absolute;font-style:normal}
+.gr{top:0;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--bad),var(--sub));opacity:.55}
+.gc{top:-7px;width:0;height:20px;border-left:2px dashed var(--bad)}
+.gm{top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:3px solid var(--card)}
+.gm.re{background:var(--bad)}.gm.of{background:var(--sub)}
+.gt span{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:var(--fs-xs);font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:0}
+.gt span.t{bottom:16px}.gt span.b{top:22px;color:var(--bad);font-weight:500}
+.gm.re span{color:var(--bad)}.gm.of span{color:var(--sub)}
+.doc{font-size:var(--fs-sm);line-height:1.7}.ln{white-space:pre-wrap;padding:0 10px;border-left:3px solid transparent}.ln.hit{background:var(--warnbg);border-left-color:var(--warn)}
+#doc td,#doc th{white-space:nowrap;letter-spacing:0}#doc th{position:sticky;top:0;background:var(--card)}
+.legend{display:flex;gap:4px 14px;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--sub);margin:4px 0 8px}
+pre{white-space:pre-wrap;word-break:break-word;margin:6px 0 0;font:var(--fs-xs)/1.6 Consolas,"D2Coding",monospace;letter-spacing:0}
+details summary{cursor:pointer;font-weight:600;padding:4px 0}
+details[open]>summary{margin-bottom:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Project K</h1><div class="tabs" role="tablist" aria-label="화면 보기"><button role="tab" data-v="home">홈</button><button role="tab" data-v="work">업무</button><button role="tab" data-v="ref">기준·근거</button><button role="tab" data-v="dev">정책·개발</button></div><span class="sub" id="tenant"></span><span class="chip" id="dbk" title="지금 연결된 상태 DB"></span>
+  <span class="sub" id="who" title="현재 역할(시연용). 오른쪽 아래 오브에서 바꿉니다."></span>
+</header>
+<main id="app"><div class="page"><section>불러오는 중…</section></div></main>
+<button id="orb" popovertarget="orbPanel" aria-label="총괄에게 요청·실험 등록·역할 선택 열기" title="총괄에게 요청 · 실험 등록 · 역할"><canvas id="orbC" aria-hidden="true"></canvas></button>
+<div id="orbPanel" popover>
+  <h3>무엇을 할까요?</h3>
+  <label title="시연용 역할 선택입니다. 사용자 인증은 미구현입니다.">역할(시연용)<select id="user"></select></label>
+  <label>총괄에게 요청할 목표<textarea id="oGoal" rows="2" placeholder="예: 미국 시장 실질 ROAS 개선 실험을 설계해 줘"></textarea></label>
+  <div class="orb2"><label>작업<select id="oWf"><option value="status">현황 점검과 보고</option><option value="design">해외 A/B 실험 설계</option></select></label>
+    <label>국가(설계 시)<select id="oC"></select></label></div>
+  <label>B안에서 바꿀 요소(설계 시 · 선택)<input id="oCh"></label>
+  <div id="oFiles"></div>
+  <div class="row"><button class="p" id="bRun">총괄에게 요청</button><button id="bNew">실험 등록</button></div>
+  <p class="sub">선택한 작업 유형대로 실행됩니다. 입력한 목표는 보고서 제목과 문서 검색 질의에 쓰이고, 설계 작업에서는 실험의 「목적」 칸에도 들어갑니다. 문장을 해석해 작업을 고르지는 않습니다. 결과는 PDF(현황 점검 → 현황·성과 보고서, 실험 설계 → 실험 기획서)로 만들어집니다.</p>
+  <div class="llm" id="llmBox"></div>
+</div>
+<dialog id="dlg"></dialog><dialog id="doc"></dialog><div id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s);let D=null;
+// 표시 규칙(보고서 PDF의 report.disp와 동일): 날짜는 2026.07.21, 제목·항목 구분은 ' — ' 대신 ': '. 저장된 값과 입력 칸의 값은 바꾸지 않는다.
+const disp=s=>String(s).replace(/\b(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}(?::\d{2})?))?/g,(m,y,mo,d,t)=>`${y}.${mo}.${d}${t?' '+t:''}`).replace(/ — /g,': ');
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs||{})){if(k==='on')for(const[ev,f]of Object.entries(v))e.addEventListener(ev,f);else if(k==='cls')e.className=v;else if(v!==null&&v!==undefined&&v!==false)e.setAttribute(k,v)}
+  for(const c of kids.flat(9)){if(c===null||c===undefined||c===false)continue;e.append(c.nodeType?c:document.createTextNode(disp(c)))}return e}
+const user=()=>$('#user').value;
+function toast(m,bad){const t=$('#toast');t.textContent=disp(m);t.className=bad?'bad':'';t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',bad?9000:4000)}
+async function api(path,body){const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const j=await r.json().catch(()=>({error:r.statusText}));
+  if(!r.ok){toast(`[${j.type||r.status}] ${j.error||JSON.stringify(j.detail)}`,true);throw new Error(j.error)}return j}
+const won=v=>v==null?'—':(v/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억';
+const fmt=(k,v)=>v==null?'계산 불가':k==='orders'?v.toLocaleString()+'건':(k==='return_rate'||k==='repurchase_90d')?(v*100).toFixed(1)+'%':v.toFixed(2);
+const CLS={'원본에서 확인됨':'ok','원본 기반 계산':'info','가정 적용':'warn','예비 결과':'warn','데이터 없음':'','검증 실패':'bad','사용자 확인 필요':'ask','성공':'ok','실패':'bad',
+ '완료':'ok','진행 중':'info','대기':'','승인 대기':'ask','미구현':'','초안':'','정보 부족':'warn','재무 확인 필요':'bad','반려':'bad','승인됨':'ok','결과 분석 완료':'info','종료':'',
+ '정책 확인 필요':'bad','대안 검토 필요':'bad','충족':'ok','공급 확인 필요':'warn','공급 불가':'bad','공급 가능(회신)':'info','담당자 확인 필요':'ask','회신 접수·담당자 검토 필요':'info','담당자 입력 필요':'warn','데이터 부족':'warn','부서 주장':'','실제 작동':'ok','모의 처리':'warn','설계 단계':'','판단 보류':'warn','성공 기준 충족':'ok','중단 기준 해당':'bad','열림':'ask'};
+const chip=s=>h('span',{cls:'chip '+(CLS[s]??CLS[(s||'').split('(')[0].trim()]??'')},s);
+const uname=id=>D.users[id]?D.users[id].name:id;
+const dlg=(...a)=>show('#dlg',...a);
+function show(sel,title,...body){const d=$(sel);d.replaceChildren(h('div',{cls:'row',style:'justify-content:space-between'},h('h3',{},title),h('button',{on:{click:()=>d.close()}},'닫기')),...body);if(!d.open)d.showModal()}
+
+async function load(){D=await api('/api/dashboard');const u=$('#user'),cur=u.value||localStorage.pkUser||'mkt_staff';
+  u.replaceChildren(...Object.entries(D.users).map(([id,x])=>h('option',{value:id},`${x.name} (${id})`)));u.value=cur;if(!ORBF){ORBF=dropzone();$('#oFiles').append(ORBF.el)}$('#llmBox').replaceChildren(...llmRows().flatMap(([k,v])=>[h('span',{},k),h('b',{},v)]));const oc=$('#oC'),ocv=oc.value;oc.replaceChildren(...D.tenant.countries.map(x=>h('option',{},x)));if(ocv)oc.value=ocv;
+  const dk=$('#dbk');dk.textContent=D.tenant.db_kind;dk.className='chip '+(D.tenant.db_kind==='운영 DB'?'':'warn');dk.title='상태 DB 파일: '+D.tenant.db;$('#tenant').textContent=disp(`${D.tenant.name} · 업무 기준일 ${D.tenant.as_of} · 설정 v${D.tenant.config_version}`);render()}
+
+// ── 화면 상태: 보기(홈/업무/기준·근거), 업무함 분류·선택. 브라우저에만 저장되는 개인 설정이다.
+let V=localStorage.pkView||'home',CAT=localStorage.pkCat||'todo',SEL=null;
+const save=()=>{localStorage.pkView=V;localStorage.pkCat=CAT};
+const go=(cat,sel)=>{V='work';CAT=cat;SEL=sel||null;save();render();scrollTo(0,0)};
+const link=(text,fn)=>h('a',{href:'#',on:{click:ev=>{ev.preventDefault();fn()}}},text);
+function render(){const VIEWS={home:renderHome,work:renderWork,ref:renderRef,dev:renderDev};if(!VIEWS[V])V='home';document.body.dataset.view=V;$('#who').textContent=uname(user());
+  for(const b of document.querySelectorAll('.tabs button'))b.setAttribute('aria-selected',b.dataset.v===V);VIEWS[V]()}
+const card=(c,title,sub,...body)=>h('section',{cls:'c'+c},h('h2',{},h('span',{},title),h('small',{},sub||'')),...body);
+const mine=x=>x.assignee===user();
+// ── 파일 첨부: 끌어다 놓기 또는 눌러서 선택. 제출 전에는 브라우저에만 있고(첨부 대기), 제출할 때 올려 요청·실험에 연결한다.
+const fsize=n=>n<1024?n+'B':n<1048576?(n/1024).toFixed(1)+'KB':(n/1048576).toFixed(1)+'MB';
+function dropzone(){let items=[];const A=D.meta.attach,list=h('ul',{cls:'flist','aria-live':'polite'}),input=h('input',{type:'file',multiple:true});
+  const draw=()=>list.replaceChildren(...items.map((it,i)=>h('li',{},h('span',{cls:'fn',title:it.file.name},it.file.name),h('span',{cls:'sub num'},fsize(it.file.size)),
+    h('span',{cls:'chip '+(it.status==='처리 실패'?'bad':it.status==='내용 분석 가능'?'ok':it.status==='첨부 대기'?'':'info'),title:it.error||''},it.status),it.error?h('span',{cls:'sub',style:'color:var(--bad)'},it.error):'',
+    it.id?'':h('button',{'aria-label':it.file.name+' 목록에서 빼기',title:'목록에서 빼기',on:{click:()=>{items.splice(i,1);draw()}}},'×'))));
+  const add=fs=>{for(const f of fs){if(items.length>=A.max_files){toast(`한 번에 ${A.max_files}개까지 첨부할 수 있습니다`,true);break}
+      items.push(f.size>A.max_mb*1048576?{file:f,status:'처리 실패',error:`${A.max_mb}MB 초과 — 빼고 제출하세요`}:f.size===0?{file:f,status:'처리 실패',error:'빈 파일 — 빼고 제출하세요'}:{file:f,status:'첨부 대기'})}draw()};
+  input.addEventListener('change',()=>{add(input.files);input.value=''});
+  const zone=h('label',{cls:'drop',tabindex:0,on:{keydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click()}},dragover:e=>{e.preventDefault();zone.classList.add('over')},dragleave:()=>zone.classList.remove('over'),
+    drop:e=>{e.preventDefault();zone.classList.remove('over');add(e.dataTransfer.files)}}},'파일을 여기에 끌어다 놓거나 클릭하여 선택하세요.',
+    h('small',{},`모든 형식 첨부 가능 · 파일당 ${A.max_mb}MB, 한 번에 ${A.max_files}개 · 내용을 읽는 형식은 ${A.readable}뿐`),input);
+  return{el:h('div',{},zone,list),clear:()=>{items=[];draw()},
+    // 제출 직전에 올린다. 하나라도 실패하면 제출을 멈추고 사유를 보여 준다.
+    upload:async()=>{if(items.some(it=>it.status==='처리 실패'&&!it.id))throw new Error('처리 실패로 표시된 파일을 목록에서 빼고 다시 제출하세요');
+      for(const it of items){if(it.id)continue;it.status='올리는 중';draw();const r=await fetch(`/api/attachments?user=${encodeURIComponent(user())}&name=${encodeURIComponent(it.file.name)}`,{method:'POST',body:it.file});
+        const j=await r.json().catch(()=>({error:r.statusText}));if(!r.ok){it.status='처리 실패';it.error=j.error||'업로드 실패';draw();throw new Error(it.error)}it.id=j.id;it.status=j.status;it.error=j.status==='처리 실패'?j.detail.reason:'';draw()}
+      return items.map(it=>it.id)}}}
+// 요청·실험 상세의 첨부 목록(서버에 저장된 상태). 내려받기만 가능하고 브라우저에서 열어 실행하지 않는다.
+async function attachList(type,id){const r=await fetch(`/api/attachments?user=${encodeURIComponent(user())}&owner_type=${type}&owner_id=${id}`),rows=await r.json().catch(()=>[]);
+  if(!r.ok)return h('p',{cls:'sub'},'첨부 목록: 현재 역할로는 볼 수 없습니다.');
+  return rows.length?h('table',{},h('thead',{},h('tr',{},['파일','크기','첨부 시각','처리 상태','연결','내용·오류'].map(x=>h('th',{},x)))),h('tbody',{},rows.map(a=>h('tr',{},
+    h('td',{},h('a',{href:`/api/attachments/${a.id}/download?user=${encodeURIComponent(user())}`},a.name),h('div',{cls:'sub'},'첨부 #'+a.id+' · '+uname(a.uploaded_by))),h('td',{cls:'num'},fsize(a.size)),h('td',{cls:'num'},a.uploaded_at),
+    h('td',{},h('span',{cls:'chip '+(a.status==='내용 분석 가능'?'ok':a.status==='처리 실패'?'bad':'info')},a.status)),h('td',{},a.link),
+    h('td',{cls:'sub'},a.detail.reason||[a.detail.summary,a.detail.note?' · '+a.detail.note:'',a.status==='내용 분석 가능'?[' ',h('button',{on:{click:()=>extractDlg(a.id)}},'추출 내용 보기')]:'']))))):h('p',{cls:'sub'},'첨부된 파일 없음')}
+// 추출 내용 보기: 값마다 출처(시트·셀, PDF 쪽·줄, 줄 번호)를 함께 보여 준다. 원문 그대로(표시 규칙 미적용). 가져오기는 사용자가 확인란을 체크해야 한다.
+async function extractDlg(aid){const r=await api(`/api/attachments/${aid}/extract?user=${encodeURIComponent(user())}`),a=r.attachment,ex=r.extraction,raw=x=>document.createTextNode(x==null?'':String(x)),body=[];
+  for(const sh of ex.sheets||[]){const ob=sh.observations;
+    body.push(h('h4',{},raw(`${ex.kind==='csv'?'표':'시트'} [${sh.name}]`),sh.hidden?[' ',h('span',{cls:'chip warn'},'숨김 시트')]:'',' ',h('span',{cls:'chip '+(sh.table.ok?'ok':'warn')},sh.table.ok?'머리글 인식됨':'표 구조 불명확')),
+      sh.table.ok?'':h('div',{cls:'note'},raw(sh.table.reason)),sh.issues.length?h('div',{cls:'note'},h('b',{},'읽지 못했거나 불명확한 부분'),h('ul',{},sh.issues.map(i=>h('li',{},raw(i))))):'',
+      h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},h('th',{},ex.kind==='csv'?'줄':'행'),sh.columns.map(c=>h('th',{},c)))),h('tbody',{},sh.rows.slice(0,200).map(row=>h('tr',{},h('td',{cls:'sub num'},row.row),
+        sh.columns.map(c=>h('td',{title:`${sh.name}!${c}${row.row}`},row.cells[c]==null?h('span',{cls:'chip'},'빈 칸'):raw(row.cells[c])))))))),
+      h('p',{cls:'sub'},`출처는 [${sh.name}]의 열 글자 + ${ex.kind==='csv'?'줄':'행'} 번호입니다(예: ${sh.name}!${sh.columns[0]||'A'}${(sh.rows[0]||{row:1}).row}). ${sh.rows.length>200?'처음 200행만 표시. ':''}`));
+    if(a.owner_type==='experiment'){const ok=ob.ok&&!ob.imported,chk=h('input',{type:'checkbox'}),btn=h('button',{cls:'p',disabled:true,on:{click:async()=>{const e=await api(`/api/experiments/${a.owner_id}/observations_from_attachment`,{user:user(),attachment_id:aid,sheet:sh.name,confirmed:chk.checked});
+        toast(`첨부 #${aid} [${sh.name}]에서 성과 ${ob.rows.length}행을 가져왔습니다`);$('#doc').close();await load();expDlg(e.id)}}},'성과 입력으로 가져오기');chk.addEventListener('change',()=>btn.disabled=!chk.checked);
+      body.push(h('h4',{},'성과 입력으로 활용'),ob.rows.length?h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},['행','안',...D.meta.obs_fields].map(x=>h('th',{cls:'r'},x)))),h('tbody',{},ob.rows.map(o=>h('tr',{},h('td',{cls:'sub num'},o._row),h('td',{},raw(o.arm)),
+          D.meta.obs_fields.map(k=>h('td',{cls:'r num',title:o._refs[k]||''},o[k]==null?h('span',{cls:'chip warn'},'결측'):raw(o[k].toLocaleString())))))))):'',
+        ob.errors.length?h('div',{cls:'banner'},h('b',{},'가져올 수 없는 값(추측해서 고치지 않습니다)'),h('ul',{},ob.errors.map(x=>h('li',{},raw(x))))):'',
+        ob.unknown_columns&&ob.unknown_columns.length?h('p',{cls:'sub'},raw('성과 항목이 아니라 가져오지 않는 열: '+ob.unknown_columns.join(', '))):'',
+        ob.compare&&ob.compare.length?h('div',{cls:'note'},h('b',{},'현재 입력된 성과와 이 파일의 값이 다릅니다'),h('ul',{},ob.compare.map(d=>h('li',{},raw(`${d.arm}안 ${d.field}: 입력값 ${d.entered==null?'결측':d.entered.toLocaleString()} ↔ 파일 ${d.file==null?'결측·없음':d.file.toLocaleString()}`))))):'',
+        ob.imported?h('p',{cls:'sub'},'이 표는 이미 성과 입력으로 가져왔습니다.'):ok?h('div',{},h('label',{},chk,' 위 값을 원본 파일과 대조해 확인했습니다. 결측은 결측으로 두고 가져옵니다.'),h('div',{cls:'row',style:'margin-top:8px'},btn,
+          h('span',{cls:'sub'},'실험이 「진행 중」일 때만 가능합니다. 승인·재무 판정은 바뀌지 않습니다.'))):h('p',{cls:'sub'},raw(ob.reason||'가져올 수 없음')))}}
+  for(const p of ex.pages||[])body.push(h('h4',{},`${p.page}쪽`),p.note?h('div',{cls:'note'},raw(p.note)):'',p.lines.length?h('div',{cls:'doc'},p.lines.map((l,i)=>h('div',{cls:'ln',title:`${p.page}쪽 ${i+1}줄`},h('span',{cls:'sub num'},(i+1)+'  '),raw(l)))):'');
+  if(ex.lines)body.push(h('div',{cls:'doc'},ex.lines.map((l,i)=>h('div',{cls:'ln'},h('span',{cls:'sub num'},(i+1)+'  '),raw(l||' ')))));
+  show('#doc',a.name,h('div',{cls:'row'},h('span',{cls:'chip info'},'규칙 기반 추출 · AI 아님'),h('span',{cls:'chip'},'사용자 첨부(원본 데이터 아님)'),h('span',{cls:'sub'},raw(`첨부 #${a.id} · ${a.link} · ${a.detail.summary||''}`))),
+    h('p',{cls:'sub',style:'margin-top:8px'},raw('읽는 범위: '+ex.limits+'. 읽지 못한 값은 비워 두고 추측하지 않습니다.')),h('div',{style:'max-height:66vh;overflow:auto'},body))}
+const usedList=r=>(r.payload._files||[]).length?h('ul',{cls:'list',style:'margin-bottom:12px'},r.payload._files.map(f=>h('li',{},h('span',{cls:'chip '+(f.used?'ok':'')},f.used?'총괄이 사용함':'사용 안 함'),' ',h('b',{},f.name),' ',h('span',{cls:'sub'},f.note)))):'';
+let ORBF=null;
+const llmRows=()=>[['현재 처리 방식',D.llm.mode],['LLM 연결 상태',D.llm.llm_state],['자연어 자유 해석',D.llm.free_text],['LLM 연결 기능',D.llm.connect]];
+const sku=id=>D.meta.skus.find(x=>x.sku_id===id);
+
+// ── 홈: 지금 결정·처리할 것만 둔다. 근거·구현 상태·환경은 「기준·근거」 탭에 있다.
+function renderHome(){const f=D.finance,b=D.baselines,ws=f.reforecast.windows,w=ws[0],sw=f.scenario&&f.scenario.windows,mn=f.reforecast.min,cov=f.covenant_min_krw,ir=D.information_requests,ex=D.experiments;
+  const n=s=>ex.filter(e=>s.includes(e.status)).length,todos=[...D.todos].sort((a,b)=>mine(b)-mine(a)),my=D.todos.filter(mine).length,metrics=Object.keys(b.labels);
+  const T=(label,value,sub,fn,bad)=>h('button',{cls:'kpi',on:{click:fn}},h('span',{cls:'l'},label),h('span',{cls:'v'+(bad?' bad':'')},value),h('span',{cls:'s'},sub));
+  $('#app').replaceChildren(h('div',{cls:'page'},
+    h('div',{cls:'kpis'},
+      T('처리할 일',D.todos.length+'건',`현재 역할 차례 ${my}건`,()=>go('todo')),
+      T('A/B 실험',ex.length+'건',`승인 대기 ${n(['승인 대기'])} · 보류 ${n(['정보 부족','대안 검토 필요','재무 확인 필요','정책 확인 필요'])} · 진행 ${n(['진행 중'])}`,()=>go('exp')),
+      T('현금 하회 예상 구간',w?`${w.start.slice(5).replace('-','.')} ~ ${w.end.slice(5).replace('-','.')}`:'없음',`재전망 최저 ${won(mn.balance)} (${mn.date.slice(5).replace('-','.')}) · 종료일 미확정`,financeDlg,!!w),
+      T('담당자 확인 요청',`미회신 ${ir.filter(r=>r.status==='담당자 확인 필요').length}건`,`전체 ${ir.length}건 · 회신은 승인이 아님`,()=>go('req'))),
+    h('div',{cls:'grid'},
+      card(7,'처리할 일',`${D.todos.length}건`,todos.length?h('div',{cls:'scroll'},h('ul',{cls:'list tasks'},todos.map(x=>h('li',{cls:mine(x)?'mine':''},
+          h('span',{cls:'row'},chip(x.kind),h('span',{cls:'sub'},uname(x.assignee)),mine(x)?h('span',{cls:'chip info'},'내 차례'):''),
+          link(x.title,()=>x.exp_id?expDlg(x.exp_id):go('todo','t'+x.id)))))):h('p',{cls:'empty'},'열린 업무가 없습니다.')),
+      card(5,'현금 제약','covenant 최소현금 '+won(cov),
+        chart(f),gap(f),
+        f.scenario&&h('p',{cls:'sub'},chip('가정 적용'),` 현재 시나리오 ${f.scenario.label}: `+(sw.length?sw.map(x=>`${x.start.slice(5).replace('-','.')} ~ ${x.end.slice(5).replace('-','.')} 하회`).join(' / '):'하회 구간 없음')),
+        h('div',{cls:'row',style:'margin-top:12px'},h('button',{on:{click:financeDlg}},'상세·차이 원인'),h('button',{on:{click:scenarioDlg}},'조건 변경 입력'))),
+      card(12,'실험 현황',`${ex.length}건 · 행을 누르면 상세·처리`,ex.length?h('div',{cls:'scroll'},h('table',{},
+        h('thead',{},h('tr',{},['#','국가','상품','목적','상태','승인권자','예산','집행일','결과'].map((x,i)=>h('th',{cls:i===6?'r':''},x)))),
+        h('tbody',{},ex.map(e=>h('tr',{cls:'click',tabindex:0,on:{click:()=>expDlg(e.id),keydown:ev=>ev.key==='Enter'&&expDlg(e.id)}},h('td',{cls:'num'},'#'+e.id),h('td',{},e.data.country||'—'),
+          h('td',{},e.data.sku_id?(sku(e.data.sku_id)||{name:e.data.sku_id}).name:'—'),h('td',{},(e.data.objective||'—').slice(0,36)),
+          h('td',{},chip(e.status)),h('td',{},e.gate&&e.gate.approver?uname(e.gate.approver):'—'),h('td',{cls:'r num'},e.data.budget_krw?(+e.data.budget_krw).toLocaleString():'—'),
+          h('td',{cls:'num'},e.data.cash_out_date||'—'),h('td',{},e.analysis?chip(e.analysis.verdict):'—')))))):
+        h('p',{cls:'empty'},'등록된 실험이 없습니다. 원본에는 실험군·비교군·성공·중단 기준이 없으므로 기존 국가별 성과를 실험 결과로 보여 주지 않습니다.')),
+      card(12,'국가별 기준선','표본 관측값 · 실험 결과 아님 · 수치를 누르면 근거',
+        h('table',{},h('thead',{},h('tr',{},h('th',{},'국가'),metrics.map(m=>h('th',{cls:'r'},b.labels[m])))),
+          h('tbody',{},Object.entries(b.countries).map(([c,ms])=>h('tr',{},h('td',{},h('b',{},c)),metrics.map(m=>h('td',{cls:'r num'},
+            h('button',{cls:'cell','aria-label':`${c} ${b.labels[m]} 근거 보기`,on:{click:()=>metricDlg(c,m)}},h('b',{},fmt(m,ms[m].value)),chip(ms[m].status)))))))),
+        h('p',{cls:'sub',style:'margin-top:12px'},b.sample_note+' 명목 ROAS가 1을 넘어도 흑자를 뜻하지 않으며, 실질 ROAS는 비용 가정에 따른 예비 결과입니다.')),
+      card(12,'표시 구분','화면의 값과 회신에는 아래 표시 중 하나가 붙습니다',h('div',{cls:'grid2',style:'grid-template-columns:auto 1fr'},[['원본에서 확인됨','제공된 원본 파일에 있는 값 그대로'],['원본 기반 계산','원본 값으로 계산한 결과'],['가정 적용','참가자 가정(A-001~)을 적용한 계산 결과'],['부서 주장','부서가 만든 전망·분석. 값을 읽었다고 검증된 것이 아님'],['합성 관측값(가상 입력)','시연·시험을 위해 넣은 성과 값. 실제 성과가 아님'],['모의 처리','승인·회신·집행을 실제 사람이나 시스템 대신 화면에서 흉내 낸 것'],['사용자 확인 필요','원본에 없어 담당자 확인이 필요한 것']].flatMap(([k,v])=>[h('div',{},chip(k)),h('div',{cls:'sub'},v)]))))))}
+
+// ── 원본 자료 열기: 글 속의 등록된 파일 이름을 링크로 바꾸고, 누르면 그 문서를 읽기 전용으로 연다.
+function src(text,country){text=String(text??'');const S=D.meta.sources;if(!S.length)return text;
+  const stems=S.map(x=>x.name.replace(/\.\w+$/,'')).sort((a,b)=>b.length-a.length).map(n=>n.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),re=new RegExp(`(?<![\\w.])(?:\\w+/)*(${stems.join('|')})(?:\\.(?:csv|md))?(?!\\w)`,'g'),out=[];
+  let i=0,m;while((m=re.exec(text))){out.push(text.slice(i,m.index));const f=S.find(x=>x.name.replace(/\.\w+$/,'')===m[1]);out.push(link(m[0],()=>srcDlg(f.path,null,null,country)));i=re.lastIndex}out.push(text.slice(i));return out}
+async function srcDlg(path,a,b,country){const r=await api(`/api/source?user=${encodeURIComponent(user())}&path=${encodeURIComponent(path)}`+(country?`&country=${encodeURIComponent(country)}`:'')),raw=x=>document.createTextNode(x);  // 원문은 표시 규칙(disp)을 거치지 않고 그대로 보여 준다
+  const cells=l=>l.split('|'),body=path.endsWith('.csv')?h('table',{},h('thead',{},h('tr',{},h('th',{},'행'),cells(r.lines[0]||'').map(c=>h('th',{},raw(c))))),
+      h('tbody',{},r.lines.slice(1).map((l,i)=>h('tr',{},h('td',{cls:'sub num'},r.nos[i+1]),cells(l).map(c=>h('td',{},raw(c)))))))
+    :h('div',{cls:'doc'},r.lines.map((l,i)=>h('div',{cls:'ln'+(a&&i+1>=a&&i+1<=b?' hit':'')},raw(l||' '))));
+  const shown=r.lines.length-(path.endsWith('.csv')?1:0),all=r.matched??r.total_lines-(path.endsWith('.csv')?1:0);
+  show('#doc',r.name+(country&&r.matched!=null?` · ${country}`:''),r.filter?h('div',{cls:r.matched!=null?'note okn':'note'},raw(r.filter+(r.matched>shown?` · 처음 ${shown}행 표시`:''))):'',h('div',{cls:'row'},chip(r.kind),h('span',{cls:'sub'},raw(`${r.path} · ${r.scale} · 전체 ${r.total_lines.toLocaleString()}행`+(!r.filter&&r.total_lines>r.lines.length?` 중 처음 ${r.lines.length}행 표시`:'')))),
+    h('div',{cls:'scroll',style:'max-height:64vh;margin-top:12px'},body));const hit=$('#doc .hit');if(hit)hit.scrollIntoView({block:'center'})}
+
+// ── 기준·근거: 판단의 근거가 되는 자료와 검증 결과.
+function renderRef(){const r=D.latest_report;$('#app').replaceChildren(h('div',{cls:'page'},
+  h('div',{cls:'row'},[['문서 검색',ragDlg],['연결 검사·예비 수치 대조',linkDlg],['재무 전망 상세',financeDlg]].map(([l,fn])=>h('button',{on:{click:fn}},l))),
+  h('div',{cls:'grid'},
+    card(6,'상품별 공급 여력','재고 커버 ↔ 안전재고 하한 · 계산 결과(원본 기반)',h('div',{cls:'scroll'},h('table',{},
+      h('thead',{},h('tr',{},['상품','제품군','커버(주)','하한(주)','리드타임','판정'].map((x,i)=>h('th',{cls:i>1&&i<5?'r':''},x)))),
+      h('tbody',{},D.meta.skus.map(x=>h('tr',{},h('td',{},x.name,h('div',{cls:'sub'},x.sku_id)),h('td',{},x.category),h('td',{cls:'r num'},x.cover_weeks??'계산 불가'),h('td',{cls:'r num'},x.safety_min_weeks),
+        h('td',{cls:'r num'},x.lead_time_weeks+'주'),h('td',{},x.short==null?chip('데이터 없음'):x.short?h('span',{cls:'chip bad'},'하한 미만'):h('span',{cls:'chip ok'},'충족'))))))),
+      h('p',{cls:'sub',style:'margin-top:12px'},'하한 미만 상품의 실험은 SCM 공급 확인 회신 전에는 상신되지 않습니다(참가자 가정 A-014). 실험 수요량은 표본에서 환산하지 않습니다. 근거: ',src('sku_inventory_ms.csv, sku_weekly_sales_ms.csv, m_sku_ms.csv'))),
+    card(6,'원본 자료',`${D.meta.sources.length}건 · 누르면 문서가 열립니다(읽기 전용)`,h('div',{cls:'scroll'},h('table',{},
+      h('thead',{},h('tr',{},['자료','규모','등급'].map(x=>h('th',{},x)))),
+      h('tbody',{},D.meta.sources.map(x=>h('tr',{},h('td',{},link(x.name,()=>srcDlg(x.path)),h('div',{cls:'sub'},x.path)),h('td',{},x.scale),h('td',{},chip(x.ext?'참가자 가정':x.class==='finance'?'재무 등급':'내부')))))))),
+    card(6,'데이터 누락·검증 오류',`${D.issues.length}건`,h('div',{cls:'scroll'},h('ul',{cls:'list'},D.issues.map(i=>h('li',{},chip(i.level),' ',src(i.text)))))),
+    card(6,'총괄 최신 보고',r?`#${r.id} · ${r.created_at}`:'',r?h('div',{},h('p',{},h('b',{},r.title)),h('p',{cls:'sub'},r.body.run_status),
+      h('div',{cls:'scroll'},r.body.sections.map(s=>h('details',{},h('summary',{},s.title),h('ul',{},s.lines.map(l=>h('li',{style:'white-space:pre-line'},src(l))))))),
+      h('div',{cls:'row',style:'margin-top:12px'},r.pdf_path?h('a',{href:`/api/reports/${r.id}/pdf`,target:'_blank'},'PDF 열기'):h('span',{cls:'sub'},'PDF 미생성'),h('button',{on:{click:()=>go('run','r'+r.run_id)}},'실행 기록'))):
+      h('p',{cls:'empty'},'아직 보고가 없습니다. 오브의 「총괄에게 요청」으로 실행하면 실제 실행 결과로 보고가 만들어집니다.')))))}
+
+// ── 정책·개발: 시스템이 어떻게 만들어졌고 어떤 정책으로 통제되는지.
+function renderDev(){$('#app').replaceChildren(h('div',{cls:'page'},
+  h('div',{cls:'row'},[['정책 보기·편집',policyDlg],['감사 로그',auditDlg]].map(([l,fn])=>h('button',{on:{click:fn}},l)),h('span',{cls:'sub'},'정책 편집은 관리자, 감사 로그는 대표·관리자 역할만 열 수 있습니다.')),
+  h('div',{cls:'grid'},
+    card(12,'LLM 연결 상태',D.llm.label,h('div',{cls:'grid2'},llmRows().flatMap(([k,v])=>[h('b',{},k),h('div',{},v)]),h('b',{},'미연결 사유'),h('div',{},D.llm.reason||'—'),h('b',{},'연결되면 맡길 역할(현재 미구현)'),h('div',{},D.llm.planned_roles.join(' · '))),
+      h('p',{cls:'sub',style:'margin-top:12px'},'지금은 모든 처리가 규칙 기반입니다. 연결되더라도 모델은 제안만 하며 계산, 재무·승인 판정, 정책 검사, 상태 변경은 기존 로직과 사람의 승인으로만 이뤄집니다. 외부 전송은 관리자가 정책에서 허용해야 합니다.')),
+    card(6,'구현 상태','실제 작동 / 모의 처리 / 설계 단계 / 미구현',h('table',{},h('tbody',{},D.build_status.map(([a,s])=>h('tr',{},h('td',{},a),h('td',{},chip(s))))))),
+    h('div',{cls:'c6',style:'display:flex;flex-direction:column;gap:16px'},
+      card(12,'에이전트 작업 상태','규칙 기반 · LLM 미연동',h('table',{},h('tbody',{},D.agents.map(a=>h('tr',{},h('td',{},a.label),h('td',{},chip(a.status)),h('td',{cls:'sub'},(a.error||a.note||a.title||'').slice(0,60))))))),
+      card(12,'실행 환경','',h('p',{},h('b',{},'CUDA '),D.env.cuda_status),
+        h('p',{cls:'sub'},`Python ${D.env.python} · torch ${D.env.torch_installed?'설치됨':'없음'} · peft ${D.env.peft_installed?'설치됨':'없음'} · nvidia-smi ${D.env.nvidia_smi_found?'있음':'없음'}`),
+        h('p',{},h('b',{},'LoRA '),D.lora.status,' — ',D.lora.stage),h('ul',{cls:'list'},D.lora.checks.map(c=>h('li',{},chip(c.result),' ',c.item,': ',h('span',{cls:'sub'},c.detail)))))))))}
+
+// ── 업무: 3단 분할(분류 → 목록 → 상세)
+const kv=rows=>h('div',{cls:'grid2',style:'margin:10px 0'},rows.flatMap(([k,v])=>[h('b',{},k),h('div',{},v||'—')]));
+function expSummary(e){const d=e.data,g=e.gate;return [
+  h('div',{cls:'row'},chip(e.status),e.analysis?chip(e.analysis.verdict):'',g&&g.approver?h('span',{},'승인권자: ',h('b',{},uname(g.approver)),g.group_report?' + 그룹 보고':''):h('span',{cls:'sub'},'승인권자 미정')),
+  kv([['국가',d.country],['대상 상품',d.sku_id?`${d.sku_id} ${(sku(d.sku_id)||{name:''}).name}${e.supply?' · 공급 '+e.supply.state:''}`:null],['목적',d.objective],['A안',d.variant_a],['B안',d.variant_b],['기간',(d.start_date||'—')+' ~ '+(d.end_date||'—')],['예산',d.budget_krw?(+d.budget_krw).toLocaleString()+'원':null],['현금 집행 예정일',d.cash_out_date],['운영조건',d.ops_status||'미확인']]),
+  g?h('div',{cls:['재무 확인 필요','정책 확인 필요'].includes(g.status)?'banner':'note'},h('b',{},`승인 경로 판정 — ${g.status}`),h('ul',{},g.reasons.map(r=>h('li',{},r)))):'',
+  h('div',{cls:'row'},h('button',{cls:'p',on:{click:()=>expDlg(e.id)}},'상세 열기·처리'))]}
+const CATS={
+  todo:['승인 대기·확인 필요',()=>D.todos.map(x=>({key:'t'+x.id,chip:x.kind,meta:uname(x.assignee),title:x.title,x})),
+    x=>{const e=D.experiments.find(e=>e.id===x.exp_id);return [h('h3',{},x.title),kv([['업무 종류',x.kind],['담당',uname(x.assignee)],['상태',x.status]]),
+      e?[h('h4',{},`연결된 실험 #${e.id}`),expSummary(e)]:h('p',{cls:'sub'},'연결된 실험 없음')]}],
+  exp:['A/B 실험',()=>D.experiments.map(e=>({key:'e'+e.id,chip:e.status,meta:`${e.data.cash_out_date||'집행일 미입력'} · ${e.data.budget_krw?(+e.data.budget_krw).toLocaleString()+'원':'예산 미입력'}`,title:`#${e.id} ${e.data.country||'국가 미입력'} · ${e.data.objective||'목적 미입력'}`,x:e})),
+    e=>[h('h3',{},`실험 #${e.id}`),expSummary(e)]],
+  req:['담당자 확인 요청',()=>D.information_requests.map(q=>({key:'q'+q.id,chip:q.status,meta:q.owner,title:`${q.id} · ${q.question}`,x:q})),
+    q=>[h('h3',{},`${q.id} · ${q.owner}에게 확인`),h('div',{cls:'row'},chip(q.status),chip('모의 처리')),h('p',{},q.question),kv([['확인할 원본',src(q.source)],['요청 구분',q.kind],['업무 기준일',q.as_of]]),
+      h('div',{cls:'note'},q.note+' 회신은 가상 입력이며 최종 승인이나 학습 사용 허가를 자동 확정하지 않습니다.'),
+      h('div',{cls:'row'},h('button',{cls:'p',on:{click:()=>replyDlg(q)}},'회신·출처 기록')),
+      h('h4',{},`회신 이력 ${q.history.length}건`),q.history.length?h('ul',{cls:'list'},q.history.map(x=>h('li',{},h('b',{},x.text),h('br'),h('span',{cls:'sub'},`${x.at} · ${uname(x.by)} · 출처: ${x.source} · ${x.mode}`)))):h('p',{cls:'sub'},'아직 회신 없음')]],
+  run:['총괄 실행 기록',()=>D.runs.map(r=>({key:'r'+r.id,chip:r.status,meta:`${uname(r.user)} · ${r.started_at}`,title:`#${r.id} ${r.goal}`,x:r})),
+    async r=>{const full=await api('/api/runs/'+r.id);return [h('h3',{},`실행 #${r.id} · ${r.goal}`),runBody(full),h('h4',{},'이 요청에 첨부된 파일'),usedList(full),await attachList('run',r.id)]}],
+  iss:['데이터 누락·검증 오류',()=>D.issues.map(i=>({key:'i:'+i.text.slice(0,80),chip:i.level,meta:'',title:i.text,x:i})),
+    i=>[h('h3',{},i.level),h('p',{},i.text),h('div',{cls:'row'},h('button',{on:{click:linkDlg}},'연결 검사·예비 수치 대조'),h('button',{on:{click:financeDlg}},'재무 전망 상세'))]],
+  done:['완료함',()=>[...D.archive.items.map(a=>({key:'a'+a.id,chip:'관리자 확인',meta:`${uname(a.by_user)} · ${a.archived_at}`,title:a.title,x:a})),
+      ...D.archive.closed_todos.map(x=>({key:'c'+x.id,chip:'완료',meta:`${uname(x.assignee)} · ${x.closed_at||''}`,title:x.title,x:{...x,closed:true}}))],
+    x=>x.closed?[h('h3',{},x.title),h('div',{cls:'row'},chip('완료'),h('span',{cls:'sub'},'업무 흐름에서 처리가 끝난 작업')),
+        kv([['업무 종류',x.kind],['담당',uname(x.assignee)],['생성',x.created_at],['완료',x.closed_at],['처리 결과',x.result]]),x.exp_id?h('div',{cls:'row'},h('button',{on:{click:()=>expDlg(x.exp_id)}},`실험 #${x.exp_id} 열기`)):'']
+      :[h('h3',{},x.title),h('div',{cls:'row'},h('span',{cls:'chip info'},'관리자 확인'),h('span',{cls:'sub'},'보드에서 내린 항목입니다. 실험 상태·승인·열린 작업은 바뀌지 않았습니다.')),
+        kv([['원래 분류',x.category],['확인 처리',uname(x.by_user)],['처리 시각',x.archived_at],['확인 내용',x.note],['당시 표시',x.meta]]),
+        h('div',{cls:'row'},x.exp_id?h('button',{on:{click:()=>expDlg(x.exp_id)}},`실험 #${x.exp_id} 열기`):'',
+          h('button',{title:'처리 역할: 시스템 관리자',on:{click:async()=>{await api('/api/board/restore',{user:user(),id:x.id});$('#dlg').close();toast('보드로 복구했습니다');await load()}}},'보드로 복구',h('small',{},' · 시스템 관리자')))]]};
+// ── 업무함: 분류별 열에 카드를 쌓는 보드. 카드를 누르면 상세·처리 창이 열린다.
+// 시스템 관리자는 카드를 「확인 처리」로 보드에서 내릴 수 있다. 내린 카드와 끝난 작업은 「완료함」 열에 기록으로 남는다.
+function renderWork(){const me=x=>x.assignee===user(),admin=(D.users[user()]||{}).role==='admin',gone=new Set(D.archive.items.map(a=>a.item_key));
+  const open=async(k,it)=>{if(k==='exp')return expDlg(it.x.id);const[label,,detail]=CATS[k],body=[await detail(it.x)].flat(9).filter(Boolean);dlg(body[0]&&body[0].tagName==='H3'?body.shift().textContent:label,...body)};
+  const confirmItem=async(label,it)=>{const note=prompt(`「${it.title.slice(0,60)}」\n확인 내용을 적어 주세요(완료함 기록에 남습니다).`);if(note===null)return;
+    await api('/api/board/archive',{user:user(),key:it.key,category:label,title:it.title,meta:[it.chip,it.meta].filter(Boolean).join(' · '),note,exp_id:it.x.exp_id||(it.key[0]==='e'?it.x.id:null)});toast('확인 처리했습니다. 완료함에서 기록을 볼 수 있습니다');await load()};
+  const cols=Object.entries(CATS).map(([k,[label,list]])=>{const items=list().filter(it=>k==='done'||!gone.has(it.key));return h('div',{cls:'col'+(k==='done'?' done':'')},h('h2',{},h('span',{},label),h('span',{cls:'cnt num'},items.length)),
+    h('div',{cls:'cards'},items.length?items.map(it=>h('div',{cls:'kc'+(me(it.x)?' mine':'')},h('button',{cls:'kcb',on:{click:()=>open(k,it)}},h('span',{cls:'row'},chip(it.chip),me(it.x)?h('span',{cls:'chip info'},'내 차례'):''),
+      h('span',{cls:'it'},it.title),it.meta?h('span',{cls:'sub'},it.meta):''),admin&&k!=='done'?h('button',{cls:'kca',title:'보드에서 내리고 완료함에 기록합니다. 업무 상태는 바뀌지 않습니다.',on:{click:()=>confirmItem(label,it)}},'확인 처리'):'')):h('p',{cls:'sub',style:'padding:4px 6px'},'없음')))});
+  $('#app').replaceChildren(h('div',{cls:'bbar'},h('b',{},'업무함'),h('span',{cls:'sub'},admin?'카드를 누르면 상세·처리 화면이 열립니다. 「확인 처리」는 카드를 보드에서 내리고 완료함에 기록합니다(업무 상태는 그대로).':'카드를 누르면 상세와 처리 화면이 열립니다. 확인 처리는 시스템 관리자 역할에서 할 수 있습니다.'),h('span',{style:'flex:1'}),
+    [['재무 전망 상세',financeDlg],['조건 변경 입력',scenarioDlg],['연결 검사·예비 수치',linkDlg],['문서 검색',ragDlg]].map(([l,fn])=>h('button',{on:{click:fn}},l))),h('div',{cls:'board'},cols));
+  if(SEL){const it=CATS[CAT]&&CATS[CAT][1]().find(i=>i.key===SEL),k=CAT;SEL=null;if(it)open(k,it)}}
+
+function replyDlg(r){const text=h('textarea',{rows:4}),source=h('input',{});
+  dlg(`${r.id} · ${r.owner} 회신(가상 입력)`,h('p',{},r.question),h('div',{cls:'form'},h('label',{},'담당자 회신 내용',text),h('label',{},'출처: 파일·행 또는 담당자 회신 위치',source)),
+    h('div',{cls:'row',style:'margin-top:20px;justify-content:flex-end'},h('button',{on:{click:()=>$('#dlg').close()}},'취소'),
+      h('button',{cls:'p',on:{click:async()=>{await api('/api/clarifications/'+r.id,{user:user(),text:text.value,source:source.value});$('#dlg').close();await load();toast('회신 접수됨 — 담당자 검토 필요')}}},'회신 기록')))}
+
+// 일별 잔액을 지나는 부드러운 곡선. 단조 보간이라 실제 값보다 높거나 낮게 휘지 않는다(기준선을 넘지 않은 날을 넘은 것처럼 그리지 않는다).
+function smooth(P){const n=P.length;if(n<3)return P.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join('');
+  const dx=[],m=[],t=[];for(let i=0;i<n-1;i++){dx[i]=P[i+1][0]-P[i][0];m[i]=(P[i+1][1]-P[i][1])/dx[i]}
+  t[0]=m[0];t[n-1]=m[n-2];for(let i=1;i<n-1;i++)t[i]=m[i-1]*m[i]<=0?0:3*(dx[i-1]+dx[i])/((2*dx[i]+dx[i-1])/m[i-1]+(dx[i]+2*dx[i-1])/m[i]);
+  let d=`M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;for(let i=0;i<n-1;i++){const h3=dx[i]/3;d+=`C${(P[i][0]+h3).toFixed(1)},${(P[i][1]+t[i]*h3).toFixed(1)} ${(P[i+1][0]-h3).toFixed(1)},${(P[i+1][1]-t[i+1]*h3).toFixed(1)} ${P[i+1][0].toFixed(1)},${P[i+1][1].toFixed(1)}`}return d}
+function chart(f){const W=560,H=190,P=[36,10,20,14],all=[...f.series.base,...f.series.official,...(f.series.scenario||[])],mn=f.reforecast.min;
+  const d0=new Date(f.series.base[0][0]),d1=new Date(f.series.base.at(-1)[0]),ymax=Math.max(...all.map(p=>p[1]))*1.05,yb=H-P[2];
+  const X=d=>P[0]+(new Date(d)-d0)/(d1-d0)*(W-P[0]-P[1]),Y=v=>yb-v/ymax*(yb-P[3]),pts=s=>s.filter(p=>new Date(p[0])<=d1).map(p=>[X(p[0]),Y(p[1])]);
+  const ns='http://www.w3.org/2000/svg',el=(t,a,txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt)e.textContent=disp(txt);return e};
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',role:'img','aria-label':'공식 전망과 재전망의 현금 잔액 비교'}),base=pts(f.series.base),line={fill:'none','stroke-linecap':'round','stroke-linejoin':'round'};
+  const g=el('linearGradient',{id:'gBase',x1:0,y1:0,x2:0,y2:1});g.append(el('stop',{offset:0,'stop-color':'var(--accent)','stop-opacity':.22}),el('stop',{offset:1,'stop-color':'var(--accent)','stop-opacity':0}));const defs=el('defs',{});defs.append(g);svg.append(defs);
+  for(const w of f.reforecast.windows)svg.append(el('rect',{x:X(w.start),y:P[3],width:Math.max(X(w.end)-X(w.start),2),height:yb-P[3],rx:4,fill:'var(--badbg)',opacity:.7}));
+  for(const v of [0,f.covenant_min_krw,f.covenant_min_krw*2])svg.append(el('line',{x1:P[0],x2:W-P[1],y1:Y(v),y2:Y(v),stroke:v===f.covenant_min_krw?'var(--bad)':'var(--line)','stroke-dasharray':v===f.covenant_min_krw?'4 4':''}),el('text',{x:2,y:Y(v)+3},(v/1e8)+'억'));
+  svg.append(el('path',{d:smooth(base)+`L${base.at(-1)[0].toFixed(1)},${yb}L${base[0][0].toFixed(1)},${yb}Z`,fill:'url(#gBase)'}));
+  svg.append(el('path',{...line,d:smooth(pts(f.series.official)),stroke:'var(--sub)','stroke-width':1.5,'stroke-dasharray':'1 5'}));
+  if(f.series.scenario)svg.append(el('path',{...line,d:smooth(pts(f.series.scenario)),stroke:'var(--warn)','stroke-width':1.75,'stroke-dasharray':'6 4'}));
+  svg.append(el('path',{...line,d:smooth(base),stroke:'var(--accent)','stroke-width':2.25}));
+  svg.append(el('circle',{cx:X(mn.date),cy:Y(mn.balance),r:4,fill:'var(--bad)',stroke:'var(--card)','stroke-width':2}),el('text',{x:X(mn.date)+8,y:Y(mn.balance)+13,style:'fill:var(--bad);font-weight:600'},`최저 ${won(mn.balance)} · ${mn.date.slice(5).replace('-','.')}`));
+  for(let m=new Date(Date.UTC(d0.getUTCFullYear(),d0.getUTCMonth(),1));m<=d1;m=new Date(Date.UTC(m.getUTCFullYear(),m.getUTCMonth()+1,1)))if(m>=d0){const k=m.toISOString().slice(0,10);svg.append(el('text',{x:X(k),y:H-4},k.slice(5).replace('-','.')))}
+  return h('div',{},svg,h('div',{cls:'legend'},h('span',{style:'color:var(--accent)'},'━ 재전망(계산)'),h('span',{},'┅ 공식 전망(주말 잔액)'),f.series.scenario?h('span',{style:'color:var(--warn)'},'╌ 현재 시나리오'):'',h('span',{style:'color:var(--bad)'},'╌ 최소현금 기준'),h('span',{},'▨ 기준 미만 구간')))}
+// 전망 충돌 표시: 두 전망의 최저 잔액이 최소현금 기준선의 어느 쪽에 있는지 한 줄 눈금으로 보여 준다.
+function gap(f){const re=f.reforecast.min.balance,of=f.official.min_closing,cov=f.covenant_min_krw,max=Math.max(re,of,cov)*1.12,pc=v=>(v/max*100).toFixed(1)+'%',lo=Math.min(re,of),hi=Math.max(re,of);
+  const M=(v,cls,top,label)=>h('i',{cls:'gm '+cls,style:`left:${pc(v)}`},h('span',{cls:top?'t':'b'},label));
+  return h('div',{cls:'gap',role:'group','aria-label':`전망 충돌: 재전망 최저 ${won(re)}, 공식 전망 최저 ${won(of)}, 기준 ${won(cov)}`},
+    h('div',{cls:'gh'},f.conflict?h('span',{cls:'pulse','aria-hidden':'true'}):'',h('b',{},f.conflict?'두 전망이 기준선 반대편에 있음':'두 전망 모두 기준선 위'),h('span',{cls:'sub'},f.conflict?`차이 ${won(hi-lo)} · 재무 확인 필요`:'충돌 없음')),
+    h('div',{cls:'gt'},h('i',{cls:'gr',style:`left:${pc(lo)};width:${((hi-lo)/max*100).toFixed(1)}%`}),h('i',{cls:'gc',style:`left:${pc(cov)}`},h('span',{cls:'b'},'기준 '+won(cov))),
+      M(re,'re',1,'재전망 '+won(re)),M(of,'of',1,'공식 '+won(of))),
+    h('p',{cls:'sub'},'재전망은 계산 결과(가정 적용), 공식 전망은 부서 주장입니다. 시스템은 어느 쪽도 정답으로 확정하지 않습니다.'),f.scope_gap?h('div',{cls:'note'},f.scope_gap.message):'')}
+
+function metricDlg(c,m){const x=D.baselines.countries[c][m];dlg(`${c} · ${D.baselines.labels[m]}: ${fmt(m,x.value)}`,
+  h('div',{cls:'row'},chip(x.status),chip(x.kind)),
+  h('div',{cls:'grid2',style:'margin-top:10px'},...[['계산 정의',x.definition],['모집단',x.population],['기간',x.period],['단위',x.unit],['귀속 기준',x.attribution],['비고',x.note]].flatMap(([k,v])=>[h('b',{},k),h('div',{},v||'—')])),
+  h('h4',{},`원본 자료 (${c} 해당 행만 열림)`),h('ul',{},(x.sources||[]).map(s=>h('li',{},src(s,c)))),
+  h('h4',{},'적용된 가정'),x.assumptions&&x.assumptions.length?h('table',{},h('tbody',{},x.assumptions.map(a=>h('tr',{},h('td',{},a.assumption_id),h('td',{},a.statement,h('div',{cls:'sub'},'이유: '+a.reason+' · 근거: ',src(a.source_link))))))):h('p',{cls:'sub'},'없음(원본 그대로)'),
+  h('h4',{},'전달받은 예비값과 대조'),h('ul',{},D.baselines.preliminary.filter(p=>p.country===c&&p.metric===m).map(p=>h('li',{},chip(p.result),` 전달 ${p.received} ↔ 계산 ${p.computed==null?'—':p.computed.toFixed(4)}`))))}
+
+function linkDlg(){dlg('데이터 연결 검사와 예비 수치 대조',h('table',{},h('thead',{},h('tr',{},['ID','검사','대상','불일치','결과','원본'].map(x=>h('th',{},x)))),h('tbody',{},D.linkage.checks.map(c=>h('tr',{},h('td',{},c.id),h('td',{},c.name),h('td',{cls:'r num'},c.total.toLocaleString()),h('td',{cls:'r num'},c.unmatched),h('td',{},chip(c.result)),h('td',{cls:'sub'},c.sources.map((s,i)=>[i?', ':'',src(s.split('/').pop())])))))),
+  h('h4',{},'관찰 기간'),h('ul',{},Object.entries(D.linkage.period).map(([k,v])=>h('li',{},`${k}: ${v[0]} ~ ${v[1]}`))),
+  h('h4',{},'전달받은 예비 수치 20개'),h('table',{},h('thead',{},h('tr',{},['국가','지표','전달값','원본 계산','결과'].map(x=>h('th',{},x)))),h('tbody',{},D.baselines.preliminary.map(p=>h('tr',{},h('td',{},p.country),h('td',{},D.baselines.labels[p.metric]),h('td',{cls:'r num'},p.received),h('td',{cls:'r num'},p.computed==null?'—':p.computed.toFixed(4)),h('td',{},chip(p.result)))))))}
+
+async function financeDlg(){const f=D.finance,dd=await api('/api/finance/daily'),i=f.reforecast.inputs;
+  dlg('재무 전망 비교 상세',h('p',{},h('b',{},'재전망 계산식 '),chip('계산 결과'),h('br'),f.reforecast.formula),
+  h('table',{},h('tbody',{},[['기초 잔액('+i.opening_date+')',i.opening_balance],['AR 회수예정 합계',i.ar_scheduled],['AP 지급예정(운영, po_id=NONE)',-i.ap_operating_scheduled],['발주대금',-i.po_scheduled],['연체 순액(미반영)',i.overdue_net_excluded]].map(([k,v])=>h('tr',{},h('td',{},k),h('td',{cls:'r num'},v.toLocaleString()+'원'))),
+    h('tr',{},h('td',{},'AP 중 발주 재기재분 제외(이중계상 방지)'),h('td',{cls:'r'},i.ap_rows_excluded_as_po_duplicate.length+'행 · 금액 일치 '+(i.ap_po_amount_match?'확인':'불일치'))))),
+  h('h4',{},'공식 전망 ',chip('부서 주장')),h('ul',{},f.official.unknown.map(u=>h('li',{},chip('사용자 확인 필요'),' ',u))),
+  f.scope_gap?h('div',{},h('h4',{},'전망 범위·산정 기준 차이'),h('div',{cls:'note'},f.scope_gap.message),h('ul',{},f.scope_gap.facts.map(x=>h('li',{},chip('원본에서 확인됨'),' ',src(x))),f.scope_gap.candidates.map(x=>h('li',{},chip('사용자 확인 필요'),' ',x))),h('p',{cls:'sub'},f.scope_gap.kind)):'',
+  h('h4',{},'차이 후보 원인(계산으로 제시 — 확정 아님)'),h('ul',{},f.candidate_causes.map(c=>h('li',{},src(c)))),
+  h('h4',{},'승인 규정 확인 결과'),h('ul',{},f.policy_findings.confirmed_in_source.map(c=>h('li',{},chip('원본에서 확인됨'),' ',src(c))),f.policy_findings.unconfirmed.map(c=>h('li',{},chip('사용자 확인 필요'),' ',c))),
+  h('h4',{},'주별 비교'),h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},['주(월)','공식 유입','재전망 유입','공식 유출','재전망 유출','공식 잔액','재전망 잔액','주중 최저'].map(x=>h('th',{cls:'r'},x)))),h('tbody',{},f.weeks.map(w=>h('tr',{},h('td',{},w.week),...[w.official_inflow,w.re_inflow,w.official_outflow,w.re_outflow,w.official_closing,w.re_closing,w.re_min_in_week].map(v=>h('td',{cls:'r num',style:v!=null&&v<3e9&&v===w.re_min_in_week?'color:var(--bad);font-weight:700':''},won(v)))))))),
+  h('h4',{},`일별 흐름 — ${dd.label}`),h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},['일자','항목','잔액'].map(x=>h('th',{},x)))),h('tbody',{},dd.daily.map(x=>h('tr',{},h('td',{cls:'num'},x.date+' '+'월화수목금토일'[x.weekday]),h('td',{},x.items.map(it=>h('div',{cls:'num'},`· ${it.type} ${it.ref} ${it.amount>0?'+':''}${it.amount.toLocaleString()}`))),h('td',{cls:'r num',style:x.below?'color:var(--bad);font-weight:700':''},won(x.balance))))))),
+  h('h4',{},`캠페인 확대 기안 25건의 집행 예정일·확정기한 대조 (하회 구간 내 ${f.budget_plans.in_window_count}건)`),h('p',{cls:'sub'},f.budget_plans.note),
+  h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},['기안','캠페인','요청액(표본)','집행 예정일','확정기한','구간 내','기한<구간'].map(x=>h('th',{},x)))),h('tbody',{},f.budget_plans.rows.map(p=>h('tr',{},h('td',{},p.plan_id),h('td',{},p.campaign_id),h('td',{cls:'r num'},p.requested_budget_krw.toLocaleString()),h('td',{cls:'num'},p.settlement_date),h('td',{cls:'num'},p.contract_deadline),h('td',{},p.in_window?chip('검증 실패'):'—'),h('td',{},p.deadline_before_window?'기한 전 상신':'—')))))))}
+
+function scenarioDlg(){const days=h('input',{type:'number',value:0}),ch=h('input',{placeholder:'예: 채널 ID'}),label=h('input',{placeholder:'예: 거래처 결제조건 변경(가상 회신)'}),reason=h('input',{placeholder:'근거(필수)'}),od=h('input',{type:'checkbox'}),wk=h('input',{type:'checkbox'});
+  const go=async ov=>{const r=await api('/api/finance/scenario',{user:user(),overlay:ov,label:label.value,reason:reason.value});toast(`시나리오 반영 — 실험 ${r.regated.length}건 재판정`);$('#dlg').close();load()};
+  dlg('조건 변경 입력 — 대안 시나리오(가상 입력)',h('p',{cls:'note'},'기준 재전망은 바꾸지 않고 대안 시나리오로만 얹습니다. 반영하면 게이트가 열려 있는 모든 실험의 승인 경로를 다시 판정합니다. 재무 담당만 실행할 수 있습니다.'),
+  h('div',{cls:'grid2'},h('label',{},'시나리오 이름'),label,h('label',{},'근거'),reason,h('label',{},'AR 만기 이동 채널'),ch,h('label',{},'이동 일수(−앞당김/＋지연)'),days,h('label',{},'연체분 기준일 반영'),od,h('label',{},'주말 만기 → 월요일 이월'),wk),
+  h('div',{cls:'row',style:'margin-top:12px'},h('button',{cls:'p',on:{click:()=>go({...(+days.value?{ar_shift:[{channel_id:ch.value,days:+days.value}]}:{}),...(od.checked?{include_overdue:true}:{}),...(wk.checked?{weekend_roll:true}:{})})}},'시나리오 반영'),h('button',{on:{click:()=>{reason.value=reason.value||'기준 복귀';go(null)}}},'기준 재전망으로 복귀')))}
+
+const FIELDS=[['country','sel'],['sku_id','sku'],['target'],['objective'],['hypothesis','area'],['variant_a'],['variant_b'],['assignment'],['channel'],['start_date','date'],['end_date','date'],['primary_metric','metric'],['success_value','number'],['stop_value','number'],['budget_krw','number'],['cash_out_date','date'],['ops_conditions','area'],['owner']];
+const OPT=[['decision_deadline','date','확정기한(있으면)'],['proposal_total_krw','number','기안 총액(묶음 상신 시)'],['min_orders_per_arm','number','안당 최소 주문 수(기본 100)'],['secondary_metrics','','보조 지표'],['notes','area','메모']];
+function expForm(d){const inp={};const mk=(k,t)=>{let e;if(t==='sel')e=h('select',{},h('option',{value:''},'선택'),D.tenant.countries.map(c=>h('option',{value:c},c)));
+    else if(t==='metric')e=h('select',{},h('option',{value:''},'선택'),Object.entries(D.meta.metrics).map(([m,v])=>h('option',{value:m},v[0])));
+    else if(t==='sku')e=h('select',{},h('option',{value:''},'선택'),D.meta.skus.map(x=>h('option',{value:x.sku_id},`${x.sku_id} ${x.name} · 커버 ${x.cover_weeks??'?'}주${x.short?' (하한 미만)':''}`)));
+    else if(t==='area')e=h('textarea',{rows:2});else e=h('input',{type:t||'text',step:'any'});e.value=d[k]??'';inp[k]=e;return e};
+  const grid=h('div',{cls:'grid2'},FIELDS.flatMap(([k,t])=>[h('label',{},D.meta.required[k],' *'),mk(k,t)]),OPT.flatMap(([k,t,l])=>[h('label',{},l),mk(k,t)]));
+  return{grid,val:()=>Object.fromEntries(Object.entries(inp).map(([k,e])=>[k,e.value===''?null:e.value]))}}
+function newExp(){const f=expForm({owner:user()}),fz=dropzone();dlg('A/B 실험 등록',h('p',{cls:'sub'},'* 항목이 비어 있으면 「정보 부족」으로 등록되고 상신되지 않습니다. 운영 조건은 해외 운영의 확인 회신이 있어야 「확인됨」이 되고, 재고 커버가 안전재고 하한 미만인 상품은 SCM 공급 확인이 필요합니다.'),f.grid,h('h4',{},'관련 파일 첨부(선택)'),h('p',{cls:'sub'},'실험 계획, 성과 자료, 조사 자료, 참고 문서 등을 붙일 수 있습니다. 첨부해도 필수 항목이 채워지거나 재무 검토·승인이 진행되지는 않습니다.'),fz.el,
+  h('div',{cls:'row',style:'margin-top:12px'},h('button',{cls:'p',on:{click:async()=>{let ids;try{ids=await fz.upload()}catch(x){return toast('첨부 실패: '+x.message,true)}const e=await api('/api/experiments',{user:user(),data:f.val(),...(ids.length?{attachment_ids:ids}:{})});toast(`실험 #${e.id} 등록 — ${e.status}`);await load();expDlg(e.id)}}},'등록')))}
+
+async function expDlg(id){const e=await api('/api/experiments/'+id),d=e.data,f=expForm(d),g=e.gate,a=e.analysis;
+  const act=(name,body,msg)=>async()=>{const r=await api(`/api/experiments/${id}/${name}`,{user:user(),...(typeof body==='function'?body():body||{})});toast(msg||`실험 #${id}: ${r.status||'처리됨'}`);await load();expDlg(r.id&&r.id!==id?r.id:id)};
+  const ask=(label)=>()=>prompt(label)||'';
+  const obsIn=Object.fromEntries(['arm','period_start','period_end',...D.meta.obs_fields].map(k=>[k,k==='arm'?h('select',{},h('option',{},'A'),h('option',{},'B')):h('input',{type:k.startsWith('period')?'date':'number',placeholder:k,style:'width:118px',title:k})]));
+  const csv=h('textarea',{rows:3,style:'width:100%',placeholder:'arm,period_start,period_end,impressions,clicks,orders,gmv_krw,refund_krw,ad_cost_krw,product_cost_krw,channel_fee_krw,shipping_krw,return_logistics_krw'});
+  const file=h('input',{type:'file',accept:'.csv,.txt',on:{change:async ev=>{csv.value=await ev.target.files[0].text()}}});
+  const st=e.status,HOLDS=['초안','정보 부족','대안 검토 필요','반려'],editable=HOLDS.includes(st)||['재무 확인 필요','정책 확인 필요','승인 대기','승인됨'].includes(st),running=['진행 중','결과 분석 완료'].includes(st),s=e.supply,open=e.todos.filter(x=>x.status==='열림');
+  const B=(label,who,fn,p)=>h('button',{cls:p?'p':'',title:'처리 역할: '+who,on:{click:fn}},label,h('small',{},' · '+who));
+  dlg(`실험 #${id} · ${d.country||'국가 미입력'}`,h('div',{cls:'row'},chip(st),g&&g.approver?h('span',{},'승인권자 ',h('b',{},uname(g.approver)),g.group_report?' + 그룹 보고':''):'',e.parent_id?h('a',{href:'#',on:{click:ev=>{ev.preventDefault();expDlg(e.parent_id)}}},`이전 실험 #${e.parent_id}`):'',h('span',{cls:'sub'},'운영조건 '+(d.ops_status||'미확인'))),
+  e.missing.length?h('div',{cls:'note'},h('b',{},'누락·확인 필요'),h('ul',{},e.missing.map(x=>h('li',{},x)))):'',
+  s?h('div',{cls:['충족','공급 가능(회신)'].includes(s.state)?'note okn':'banner'},h('b',{},`대상 상품 공급 여력 — ${s.state} `),chip('계산 결과'),s.reply?[' ',chip('모의 처리')]:'',h('ul',{},s.reasons.map(r=>h('li',{},r))),
+    s.short&&s.alternatives_text?h('span',{cls:'sub'},'같은 제품군에서 하한 이상인 상품: '+s.alternatives_text+' · 근거 A-014'):''):'',
+  g?h('div',{cls:['재무 확인 필요','정책 확인 필요'].includes(g.status)?'banner':'note'},h('b',{},`승인 경로 판정(${g.scenario}) — 판정 당시 결과: ${g.status}`),h('ul',{},g.reasons.map(r=>h('li',{},r))),h('span',{cls:'sub'},'근거: ',src(g.sources.join(', ')),' · 가정 A-009')):'',
+  d.suggestions?h('details',{},h('summary',{},'실험 설계 에이전트의 제안(규칙 기반 — 담당자 확정 필요)'),h('ul',{},Object.entries(d.suggestions).map(([k,v])=>h('li',{},h('b',{},k+': '),v||'—')))):'',
+  d._approval?h('p',{},chip('승인됨'),` ${uname(d._approval.by)} · ${d._approval.at} · ${d._approval.reason}`):'',
+  h('h4',{},`열린 작업 ${open.length}건`),open.length?h('ul',{cls:'list'},open.map(x=>h('li',{},chip(x.kind),' ',h('b',{},uname(x.assignee)),' ',h('span',{cls:'sub'},x.title)))):h('p',{cls:'sub'},'없음'),
+  h('h4',{},'지금 할 수 있는 처리'),h('div',{cls:'row'},
+    HOLDS.includes(st)&&B('상신','마케팅 담당',act('submit'),1),
+    editable&&d.ops_status!=='확인됨'&&B('운영조건 확인 회신','해외 운영',act('ops_confirm',()=>({note:ask('해외 운영 회신 내용(가상 입력)')()}))),
+    s&&s.short&&editable&&[B('공급 가능 회신','SCM·재고',act('supply_confirm',()=>({available:true,note:ask('공급 가능 근거: 물량·입고 시점(가상 입력)')()}))),B('공급 불가 회신','SCM·재고',act('supply_confirm',()=>({available:false,note:ask('공급 불가 사유(가상 입력)')()})))],
+    s&&s.short&&st==='진행 중'&&B('공급 불가 정정','SCM·재고',act('supply_confirm',()=>({available:false,note:ask('공급 불가 사유(가상 입력)')()}))),
+    st==='재무 확인 필요'&&B('하회 구간 확인','재무 담당',act('finance_confirm',()=>({note:ask('재무 확인 메모: 유입·유출 시점과 근거')()}))),
+    st==='승인 대기'&&[B('승인',uname(g.approver),act('decide',()=>({approve:true,reason:ask('승인 사유')()})),1),B('반려',uname(g.approver),act('decide',()=>({approve:false,reason:ask('반려 사유')()})))],
+    st==='승인됨'&&B('진행 시작 표시','마케팅 담당',act('start'),1),
+    running&&B('총괄에게 분석·검증·보고 요청','마케팅 담당',async()=>{const r=await api('/api/runs',{user:user(),workflow:'analyze',payload:{exp_id:id,goal:`실험 #${id} 성과 분석과 검증`}});await load();runDlg(r.id)},1),
+    st==='결과 분석 완료'&&B('판단 입력·종결','마케팅 담당',act('conclude',()=>({judgment:ask('담당자 최종 판단(예산 확대·중단 등은 사람이 결정)')()}))),
+    ['결과 분석 완료','종료'].includes(st)&&B('다음 실험 만들기','마케팅 담당',act('next',()=>({changes:{variant_b:ask('다음 실험에서 바꿀 요소(B안)')()||null}}),'다음 실험 초안 생성'))),
+  h('p',{cls:'sub',style:'margin-top:8px'},st==='정책 확인 필요'?'정책 담당자 확인(F11) 전에는 승인·진행할 수 없습니다. 업무 › 담당자 확인 요청에서 회신을 기록합니다. ':'','현재 상태에서 가능한 처리만 보입니다. 권한은 위쪽 역할 선택에 따라 서버가 검사하며, 회신·승인은 모두 가상 입력입니다.'),
+  h('h4',{},'설계'),h('details',{open:editable||null},h('summary',{},editable?'설계 항목 입력·수정':'설계 항목 보기(이 상태에서는 수정할 수 없음)'),f.grid,
+    editable?h('div',{cls:'row',style:'margin-top:12px'},h('button',{on:{click:act('update',()=>({data:f.val()}))}},'설계 저장')):''),
+  (running||st==='종료')&&[h('h4',{},`성과 데이터 (${e.observations.length}행)`),e.observations.length?h('div',{cls:'scroll'},h('table',{},h('thead',{},h('tr',{},['안','기간',...D.meta.obs_fields,'출처'].map(x=>h('th',{cls:'r'},x)))),h('tbody',{},e.observations.map(o=>h('tr',{},h('td',{},o.arm),h('td',{cls:'num'},`${o.period_start||'—'}~${o.period_end||'—'}`),D.meta.obs_fields.map(k=>h('td',{cls:'r num'},o[k]==null?h('span',{cls:'chip'},'결측'):o[k].toLocaleString())),h('td',{cls:'sub'},o.source)))))):'',
+    running&&[h('div',{cls:'row',style:'margin-top:8px'},Object.values(obsIn),h('button',{on:{click:act('observations',()=>({rows:[Object.fromEntries(Object.entries(obsIn).map(([k,i])=>[k,i.value]))]}))}},'행 추가')),
+      h('div',{style:'margin-top:8px'},csv,h('div',{cls:'row',style:'margin-top:8px'},file,h('button',{on:{click:act('observations',()=>({csv:csv.value}))}},'CSV 가져오기'),h('span',{cls:'sub'},'엑셀은 CSV로 저장해 가져옵니다. 빈 칸·NONE은 결측으로 남습니다.')))],
+    h('h4',{},'분석'),a?h('div',{},h('div',{cls:'row'},chip(a.verdict),h('span',{cls:'sub'},a.kind+' · 핵심 지표: '+a.definition)),
+      a.holds.length?h('div',{cls:'note'},h('b',{},'판단 보류 사유'),h('ul',{},a.holds.map(x=>h('li',{},x)))):'',a.warnings.length?h('ul',{},a.warnings.map(x=>h('li',{},chip('사용자 확인 필요'),' ',x))):'',
+      h('table',{},h('thead',{},h('tr',{},['안','CTR','CVR','명목 ROAS','실질 ROAS','반품률','공헌이익','결측'].map(x=>h('th',{cls:'r'},x)))),h('tbody',{},Object.entries(a.arms).map(([k,m])=>h('tr',{},h('td',{},k),['ctr','cvr','nominal_roas','real_roas','return_rate'].map(x=>h('td',{cls:'r num'},m[x]==null?'계산 불가':m[x].toFixed(4))),h('td',{cls:'r num'},m.contribution==null?'계산 불가':m.contribution.toLocaleString()),h('td',{cls:'sub'},m.missing_fields.join(', ')||'—'))))),
+      h('p',{cls:'sub',style:'margin-top:8px'},a.note)):h('p',{cls:'sub'},'아직 분석하지 않았습니다.'),
+    d._human_judgment?h('p',{},h('b',{},'담당자 판단: '),d._human_judgment.text,` (${uname(d._human_judgment.by)})`):''],
+  h('h4',{},'이 실험에 첨부된 파일'),await attachList('experiment',id),
+  h('h4',{},'처리 이력'),h('div',{cls:'scroll'},h('table',{},h('tbody',{},e.history.map(x=>h('tr',{},h('td',{cls:'num sub'},x.ts),h('td',{},uname(x.actor)),h('td',{},h('b',{},x.event)),h('td',{},x.detail)))))))}
+
+async function runReq(){const g=$('#oGoal');let ids;try{ids=await ORBF.upload()}catch(e){return toast('첨부 실패: '+e.message,true)}
+  const r=await api('/api/runs',{user:user(),workflow:$('#oWf').value,payload:{goal:g.value||null,country:$('#oC').value,change:$('#oCh').value||null,...(ids.length?{attachment_ids:ids}:{})}});
+  $('#orbPanel').hidePopover();g.value='';ORBF.clear();await load();runDlg(r.id)}
+async function runDlg(id){const r=await api('/api/runs/'+id);dlg(`실행 #${id} · ${r.goal}`,...runBody(r),h('h4',{},'이 요청에 첨부된 파일'),usedList(r),await attachList('run',id))}
+function runBody(r){return [h('div',{cls:'row'},chip(r.status),h('span',{cls:'sub'},`${uname(r.user)} · ${r.started_at} → ${r.ended_at||''}`),r.report_id?h('a',{href:`/api/reports/${r.report_id}/pdf`,target:'_blank'},`보고서 #${r.report_id} PDF`):''),
+  h('table',{},h('thead',{},h('tr',{},['순서','역할','상태','정책 검사','결과'].map(x=>h('th',{},x)))),h('tbody',{},r.tasks.map(t=>h('tr',{},h('td',{},t.seq),h('td',{},t.role_label),h('td',{},chip(t.status)),h('td',{},t.policy?chip(t.policy.decision):'미실행'),
+    h('td',{},t.error?h('span',{style:'color:var(--bad)'},t.error):t.output?h('details',{},h('summary',{},t.output.summary||'결과'),h('pre',{},JSON.stringify(t.output,null,1))):'—'))))),
+  h('h4',{},`총괄이 이 실행에서 사용자에게 요청한 정보 ${r.information_requests.length}건`),
+  h('p',{cls:'sub'},'이번 실행에서 실제로 걸린 사유만 요청합니다. 사용자는 원본을 가진 담당자의 자료·회신을 전달하면 됩니다(가상 입력, 외부 발송 없음). 회신은 승인이 아닙니다.'),
+  h('ul',{cls:'list'},r.information_requests.map(q=>h('li',{},h('b',{},`${q.id} · ${q.owner}`),' ',chip(q.status),h('p',{},q.question),q.trigger?h('p',{cls:'sub'},'요청 사유: '+q.trigger):'',
+    q.reply?h('button',{on:{click:()=>replyDlg(q)}},'회신·출처 기록'):'')))]}
+
+function ragDlg(){const q=h('input',{style:'flex:1',placeholder:'예: covenant 하회 예상 구간 신규 현금 약정'}),out=h('div',{});
+  const go=async()=>{const r=await api(`/api/rag?user=${encodeURIComponent(user())}&q=${encodeURIComponent(q.value)}`);out.replaceChildren(h('p',{cls:'sub'},`검색 범위: ${r.scope} · 권한으로 숨겨진 단락 ${r.hidden_by_permission}개`),
+    r.insufficient?h('div',{cls:'note'},r.message):h('ul',{cls:'list'},r.hits.map(x=>h('li',{},h('b',{},(f=>f?link(`${x.doc} ${x.line_start}–${x.line_end}행`,()=>srcDlg(f.path,x.line_start,x.line_end)):`${x.doc} ${x.line_start}–${x.line_end}행`)(D.meta.sources.find(f=>f.name===x.doc||f.path===x.doc))),' ',h('span',{cls:'sub'},`${x.heading} · 일치율 ${x.coverage}`),h('pre',{},x.text)))),
+    r.conflicts.length?h('div',{cls:'banner'},h('b',{},'등록된 자료 충돌'),h('ul',{},r.conflicts.map(c=>h('li',{},`${c.id}: ${c.text}`))),h('span',{cls:'sub'},r.conflict_note)):'')};
+  q.addEventListener('keydown',e=>e.key==='Enter'&&go());dlg('문서 검색 (원문 위치 표시)',h('div',{cls:'row'},q,h('button',{cls:'p',on:{click:go}},'검색')),out)}
+async function policyDlg(){const p=await api('/api/policy'),ta=h('textarea',{rows:22,style:'width:100%;font:12px Consolas,monospace'});ta.value=JSON.stringify(p.policy,null,2);
+  dlg('보안·거버넌스 정책',h('p',{cls:'sub'},`현재: ${p.source}. 변경은 관리자만 가능합니다. 다음 행동은 어떤 설정으로도 풀 수 없습니다: ${p.hard_forbidden.join(', ')}`),ta,
+  h('div',{cls:'row',style:'margin-top:8px'},h('button',{cls:'p',on:{click:async()=>{let j;try{j=JSON.parse(ta.value)}catch(e){return toast('JSON 형식 오류: '+e.message,true)}await api('/api/policy',{user:user(),policy:j});toast('정책 저장됨');load()}}},'저장(관리자)')))}
+async function auditDlg(){const rows=await api(`/api/audit?user=${encodeURIComponent(user())}&only_blocked=true`);dlg('감사 로그 — 차단·보류 기록(최근 200건)',h('div',{cls:'scroll',style:'max-height:60vh'},h('table',{},h('thead',{},h('tr',{},['시각','주체','위임','행동','대상','판정','사유'].map(x=>h('th',{},x)))),h('tbody',{},rows.map(r=>h('tr',{},h('td',{cls:'num sub'},r.ts),h('td',{},r.actor),h('td',{},r.via||'—'),h('td',{},r.action),h('td',{},r.resource||'—'),h('td',{},chip(r.decision)),h('td',{},r.reason)))))))}
+
+$('#user').addEventListener('change',e=>{localStorage.pkUser=e.target.value;render()});
+for(const b of document.querySelectorAll('.tabs button'))b.onclick=()=>{V=b.dataset.v;save();render()};
+$('#bRun').onclick=runReq;$('#bNew').onclick=()=>{$('#orbPanel').hidePopover();newExp()};
+$('#oGoal').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();runReq()}});
+// ── 오브: 역할 선택·총괄 요청·실험 등록을 한곳에 모은 입자 구. 화면 어디서든 입력하면 반응한다.
+(function(){const c=$('#orbC'),x=c.getContext('2d'),S=72,dpr=Math.min(devicePixelRatio||1,2),N=240,pts=[],dark=matchMedia('(prefers-color-scheme:dark)'),still=matchMedia('(prefers-reduced-motion:reduce)');
+  c.width=c.height=S*dpr;x.scale(dpr,dpr);
+  for(let i=0;i<N;i++){const y=1-2*(i+.5)/N,r=Math.sqrt(1-y*y),a=i*2.399963;pts.push([Math.cos(a)*r,y,Math.sin(a)*r,Math.random()*6.283])}  // 피보나치 구면 배치
+  let E=0,rot=0,last=0,on=true;  // E = 입력 에너지(키 입력마다 오르고 시간이 지나면 가라앉는다)
+  function draw(t){const dt=Math.min((t-last)/1000||0,.05);last=t;rot+=dt*(.5+E*3);E*=Math.pow(.04,dt);
+    x.clearRect(0,0,S,S);const cs=Math.cos(rot),sn=Math.sin(rot),rgb=dark.matches?'130,177,255':'34,86,196';
+    for(const[px,py,pz,ph]of pts){const k=1+E*.26*Math.sin(t/90+ph),X=(px*cs+pz*sn)*k,Z=pz*cs-px*sn,d=(Z+1)/2;
+      x.fillStyle=`rgba(${rgb},${(.2+d*.8).toFixed(2)})`;x.beginPath();x.arc(S/2+X*S*.36,S/2+py*k*S*.36,.5+d*1.1+E*.5,0,6.283);x.fill()}
+    if(still.matches&&E<.01)on=false;else requestAnimationFrame(draw)}  // 동작 줄이기 설정이면 입력에 반응할 때만 움직인다
+  requestAnimationFrame(draw);
+  const kick=v=>{E=Math.min(E+v,1.4);if(!on){on=true;requestAnimationFrame(draw)}};
+  document.addEventListener('input',()=>kick(.35));$('#orb').addEventListener('pointerenter',()=>kick(.5))})();
+
+if(['#home','#work','#ref','#dev'].includes(location.hash))V=location.hash.slice(1);
+load().then(()=>{const m=location.hash.match(/^#(exp|run)=(\d+)$/);if(m)(m[1]==='exp'?expDlg:runDlg)(+m[2]);else if(location.hash==='#finance')financeDlg();else if(location.hash==='#ask')$('#orbPanel').showPopover();else{const x=location.hash.match(/^#extract=(\d+)$/);if(x)extractDlg(+x[1])}})  // 바로가기: #exp=3, #run=2, #finance, #ask, #extract=5
+  .catch(e=>{$('#app').replaceChildren(h('div',{cls:'page'},h('section',{},'불러오기 실패: '+e.message)))});
+</script>
+</body>
+</html>

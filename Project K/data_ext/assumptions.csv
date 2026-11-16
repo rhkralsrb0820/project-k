@@ -1,0 +1,16 @@
+assumption_id|statement|kind|applies_from|source_link|reason
+A-001|제품원가·출고 배송비는 주문 1건당 1EA로 적용한다|가정|기준일|mkt_orders_ms.csv(수량 컬럼 없음) × mkt_cost_master_ms.csv|주문 행에 수량이 없어 적용 단위를 정해야 함
+A-002|채널수수료 = 환불 전 GMV × channel_fee_pct, 환불 시 수수료 회수 없음|가정|기준일|mkt_cost_master_ms.csv channel_fee_pct|수수료 환급 자료가 없으면 회수를 사실로 가정하지 않음. 대안(순매출 기준)은 별도 값으로 병기
+A-003|환불된 주문의 제품원가는 회수되지 않는 것으로 본다(재판매 미가정)|가정|기준일|mkt_returns_ms.csv, mkt_cost_master_ms.csv|반품 재입고·재판매 자료가 없을 때
+A-004|반품 물류비는 환불이 있는 주문 1건당 1회 적용한다|가정|기준일|mkt_cost_master_ms.csv return_logistics_cost_krw|적용 횟수 자료가 없을 때
+A-005|고객의 국가는 해당 고객의 주문 국가로 본다|가정|기준일|mkt_orders_ms.csv customer_ref·country|mkt_repurchase_ms.csv에 국가 컬럼이 없음. 고객당 주문 국가가 하나인지 자료에서 확인할 것
+A-006|90일 재구매는 최초구매일+90일이 기준일 이전인 고객만 판정한다|가정|기준일|mkt_repurchase_ms.csv first_order_date|관찰이 끝나지 않은 고객을 비재구매로 단정하지 않기 위함
+A-007|재전망에서 주말 만기 항목은 해당 일자에 그대로 배치한다(영업일 이월은 대안 시나리오)|가정|기준일|fin_ar_aging_ms.csv, fin_ap_aging_ms.csv|주말 만기 처리 규칙이 자료에 없을 때
+A-008|기준일 이전에 만기가 지난 미수·미지급(연체분)은 기준 재전망에 넣지 않는다(반영은 대안 시나리오)|가정|기준일|fin_ar_aging_ms.csv, fin_ap_aging_ms.csv|연체분의 실제 회수·지급 시점이 자료에 없을 때
+A-009|해외 소규모 실험 집행안의 승인권한은 캠페인 확대안 집행 규정을 준용한다|가정|기준일|승인 규정 문서|실험 집행안 전용 규정이 없을 때. 기존 권한을 낮추지 않고 그대로 적용
+A-010|화면의 역할 계정은 시연용이다|가정|기준일|config의 users|사용자 인증이 없음
+A-011|실험 판정 최소 표본과 유의수준은 config의 experiment_defaults를 쓴다|가정|기준일|config experiment_defaults|실험별로 담당자가 바꿀 수 있음
+A-012|집행일이 기준 재전망 하회 구간 밖이어도 A-007·A-008의 대안을 적용하면 구간에 드는 경우 평시 전결 전에 재무 확인을 먼저 거친다|가정|기준일|fin_ar_aging_ms.csv, fin_ap_aging_ms.csv, sc_purchase_orders_ms.csv|하회 구간 종료일은 가정 기반 재계산이라 확정 전망이 아님
+A-014|실험 대상 상품의 재고 커버(현재고÷최근 4주 평균 판매)가 안전재고 하한 미만이면 공급 확인 회신 전에는 상신하지 않는다. 공급 불가 회신이면 대상 상품 또는 일정을 바꿔야 한다|가정|기준일|sku_inventory_ms.csv, sku_weekly_sales_ms.csv, m_sku_ms.csv|안전재고 미달 상품에 수요를 더 끌어오면 품절로 실험 결과가 왜곡됨. 실험 수요량은 수치로 환산하지 않음
+A-015|재고·SCM 담당은 공급 가능 여부를 회신한다. 회신은 승인이 아니다|가정|기준일|config의 users·policy|상신 전 확인 단계로만 쓰고 승인권한은 바꾸지 않음
+A-016|승인 후 후속 작업(집행 준비·운영 준비·성과 입력·담당자 판단)의 종류와 담당은 이 시스템의 업무 설계다|가정|기준일|app/experiments.py|승인 결과가 작업 상태로 이어지게 하려는 설계. 외부 집행은 하지 않음

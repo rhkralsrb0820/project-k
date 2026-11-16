@@ -1,0 +1,10 @@
+# 이미 PC에 있던 것(검증한 버전): fastapi 0.142.2, uvicorn 0.54.0
+fastapi
+uvicorn
+# 추가 설치: 보고서 PDF 생성(순수 파이썬)
+fpdf2==2.9.0
+# 선택 설치(LoRA 학습·평가를 돌릴 때만). 검증한 버전: torch 2.15.0+cpu, transformers 5.23.0, peft 0.21.3
+#   CPU:  pip install --index-url https://download.pytorch.org/whl/cpu torch ; pip install transformers peft
+#   NVIDIA GPU: pytorch.org 안내의 CUDA용 torch를 설치(이 PC에서는 미검증)
+# PostgreSQL(DATABASE_URL 지정)을 쓸 때만 필요하다. SQLite로 돌리면 없어도 된다
+psycopg[binary]
